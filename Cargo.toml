@@ -1,3 +1,14 @@
+[package]
+name = "d3d12_hook"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
-image = "0.24"
-sdl2 = "0.36"
+windows = { version = "0.56", features = [
+  "Win32_System_LibraryLoader",
+  "Win32_Graphics_Direct3D12",
+  "Win32_Foundation"
+]}

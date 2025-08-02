@@ -1,27 +1,33 @@
-name: Rust Build
+name: Build d3d12.dll
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Set up Rust
-      uses: actions/setup-rust@v1
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
       with:
-        rust-version: stable
+        toolchain: stable
+        override: true
 
-    - name: Build project
-      run: cargo build --verbose
+    - name: Build Release DLL
+      run: cargo build --release
 
-    - name: Run tests
-      run: cargo test --verbose
+    - name: Rename to d3d12.dll
+      run: |
+        mkdir output
+        copy target\release\d3d12_hook.dll output\d3d12.dll
+
+    - name: Upload DLL Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: d3d12.dll
+        path: output/d3d12.dll

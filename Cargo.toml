@@ -1,0 +1,3 @@
+[dependencies]
+image = "0.24"
+sdl2 = "0.36"

@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
+name = "d3d12_hook"
 crate-type = ["cdylib"]
 
 [dependencies]

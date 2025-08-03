@@ -1,36 +1,37 @@
-name: Build & Release Pre-release DLL
+name: Release DLL
 
 on:
   push:
-    branches: [ main ] # или твоя ветка
+    branches:
+      - main  # или 'master' если у тебя другой
+    paths:
+      - '**/*.rs'
+      - 'Cargo.toml'
+  workflow_dispatch: # запуск вручную
 
 jobs:
-  build:
+  build-and-release:
     runs-on: windows-latest
 
     steps:
-    - name: 🔽 Checkout кода
-      uses: actions/checkout@v4
+      - name: 🔻 Клонирование репозитория
+        uses: actions/checkout@v4
 
-    - name: 🧰 Установка Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
+      - name: 🛠️ Установка Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
 
-    - name: 🧱 Сборка проекта
-      run: cargo build --release
+      - name: 🔨 Сборка DLL
+        run: cargo build --release
 
-    - name: 📁 Найти DLL
-      id: find_dll
-      shell: pwsh
-      run: |
-        $dll = Get-ChildItem -Path target/release -Filter *.dll | Select-Object -First 1
-        echo "dll_path=$($dll.FullName)" >> $env:GITHUB_ENV
-
-    - name: 🚀 Создание или обновление pre-release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: pre-release
-        name: "Auto Pre-release Build"
-        prerelease: true
-        files: ${{ env.dll_path }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 📦 Создание релиза
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: pre-release
+          name: "Pre-Release"
+          prerelease: true
+          files: |
+            target/release/d3d12_hook.dll
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

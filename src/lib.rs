@@ -1,41 +1,21 @@
-use std::ffi::c_void;
-use std::ptr;
-use windows::Win32::Foundation::{HRESULT, HMODULE};
-use windows::Win32::Graphics::Direct3D12::*;
-use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryW};
+use windows::core::{PCSTR, PCWSTR};
+use windows::Win32::Foundation::{HMODULE, FARPROC};
+use windows::Win32::System::LibraryLoader::{LoadLibraryW, GetProcAddress};
 
-type D3D12CreateDeviceFn = unsafe extern "system" fn(
-    *mut c_void,
-    D3D_FEATURE_LEVEL,
+pub unsafe fn load_d3d12_create_device() -> Option<unsafe extern "system" fn(
+    *mut core::ffi::c_void,
+    u32,
     *const windows::core::GUID,
-    *mut *mut c_void
-) -> HRESULT;
+    *mut *mut core::ffi::c_void
+) -> windows::core::HRESULT> {
+    // 1. Преобразуем строку в PCWSTR (UTF-16 + нуль-терминатор)
+    let wide: Vec<u16> = "d3d12_original.dll".encode_utf16().chain([0]).collect();
+    let hmodule: HMODULE = LoadLibraryW(PCWSTR(wide.as_ptr())).ok()?;
 
-#[no_mangle]
-pub extern "system" fn D3D12CreateDevice(
-    adapter: *mut c_void,
-    min_feature_level: D3D_FEATURE_LEVEL,
-    riid: *const windows::core::GUID,
-    device_out: *mut *mut c_void,
-) -> HRESULT {
-    unsafe {
-        let dll = LoadLibraryW("d3d12_original.dll");
-        if dll.0 == 0 {
-            println!("[hook] d3d12_original.dll not loaded");
-            return HRESULT(-1);
-        }
+    // 2. Преобразуем имя функции в PCSTR (ASCII + \0)
+    let func_name = b"D3D12CreateDevice\0";
+    let func_ptr: FARPROC = GetProcAddress(hmodule, PCSTR(func_name.as_ptr())).ok()?;
 
-        let orig = GetProcAddress(dll, "D3D12CreateDevice\0");
-        if orig.is_null() {
-            println!("[hook] D3D12CreateDevice not found");
-            return HRESULT(-1);
-        }
-
-        let real_fn: D3D12CreateDeviceFn = std::mem::transmute(orig);
-        let result = real_fn(adapter, min_feature_level, riid, device_out);
-
-        println!("[hook] D3D12CreateDevice called — hooked in Rust!");
-
-        result
-    }
+    // 3. Приводим к нужному типу функции и возвращаем
+    Some(std::mem::transmute(func_ptr))
 }

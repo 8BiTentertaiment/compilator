@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "d3d12_hook"
+name = "d3d12"
 crate-type = ["cdylib"]
 
 [dependencies]
 windows = { version = "0.56", features = [
+  "Win32_Foundation",
   "Win32_System_LibraryLoader",
-  "Win32_Graphics_Direct3D12",
-  "Win32_Foundation"
+  "Win32_Graphics_Direct3D12"
 ]}
